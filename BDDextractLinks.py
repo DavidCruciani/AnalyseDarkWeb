@@ -1,7 +1,8 @@
 import allVariables
 import mysql.connector 
-from os import system, mkdir
+from os import mkdir
 from os.path import exists
+import sys
 
 conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
 cursor = conn.cursor()
@@ -11,7 +12,12 @@ if not exists(allVariables.pathToSite):
 
 links = open(allVariables.pathToSite + "siteOnion.txt",'w')
 
-NB_MAX_URLS_TO_EXTRACT = 1 #nombre de sites à extraire de allVariables.allLinks
+if len(sys.argv) < 2:
+    print("il manque le nombre d'url a extraire")
+    exit(-1)
+
+NB_MAX_URLS_TO_EXTRACT = int(sys.argv[1])   #nombre de sites à extraire de la base de données
+
 # On suppose que NumberOfLine > NB_MAX_URLS_TO_EXTRACT
 for x in range(0, NB_MAX_URLS_TO_EXTRACT):
     try:

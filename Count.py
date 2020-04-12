@@ -66,7 +66,7 @@ motBDD=extract_topn_from_vector(feature_names,sorted_items,6)
 
 listCat = {}
 
-with open(allVariables.pathToProg + "categories.json") as json_file:
+with open(allVariables.pathToProg + "wordClassification/categories.json") as json_file:
     dataCateg = json.load(json_file)
 
     for key in dataCateg.keys():
