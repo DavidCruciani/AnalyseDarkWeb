@@ -24,7 +24,7 @@ for x in range(0, NB_MAX_URLS_TO_EXTRACT):
         cursor.execute("""SELECT MIN(id) FROM site WHERE enCours = 0 """)
         rows = cursor.fetchone()
 
-        if rows != (None,):
+        if rows != (None,) or rows != None:
             try:
                 cursor.execute("""SELECT url FROM site WHERE id = %s """, (rows[0],))
                 url = cursor.fetchone()

@@ -85,8 +85,11 @@ if __name__ == "__main__":
         #suppression des accents
         html_page = unicodedata.normalize('NFD', html_page).encode('ascii', 'ignore')
 
-        regex = re.compile('<style .*>(.*)</style>')
+        regex = re.compile('<style>(.*)</style>')
+        reg = re.compile('<style .*>(.*)</style>')
+
         html_page = regex.sub(" ", str(html_page))
+        html_page = reg.sub(" ", str(html_page))
 
         #Feeding the content
         parser.feed(str(html_page))
@@ -115,7 +118,7 @@ if __name__ == "__main__":
                 cursor.execute("""SELECT id FROM site WHERE url like %s """, (row,)) 
                 rows = cursor.fetchone()
 
-                if rows == (None,):
+                if rows == (None,) or rows == None:
                     try:
                         cursor.execute("""INSERT INTO site(url) VALUES(%s)""", (str(parser.lsLinks[i]), ) )
                         conn.commit()
