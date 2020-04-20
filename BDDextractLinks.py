@@ -36,7 +36,7 @@ for x in range(0, NB_MAX_URLS_TO_EXTRACT):
                 print("id: " + str(rows[0]))
                 print("url: " + url[0])
 
-                links.write(url[0])
+                links.write(str(rows[0]) + "," + url[0])
 
             except mysql.connector.Error as e:
                 print("msg update: " + e.msg)

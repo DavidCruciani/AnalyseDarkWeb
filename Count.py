@@ -34,18 +34,30 @@ def extract_topn_from_vector(feature_names, sorted_items, topn=10):
 
 documents = []
 
-url = sys.argv[1]
+if len(sys.argv) != 3:
+        print("il manque l'identifiant ainsi que l'url a extraire")
+        exit(-1)
+
+i_d = sys.argv[1] 
+url = sys.argv[2]
+
 
 pattern = re.compile('^([0-9]+)|[0-9]+')
 
-with open(allVariables.pathToHtml + url + ".txt", 'rb') as file:
-    content = ''
-    for line in file:
-        word = str(line).split(" ")
-        for m in word:
-            #if not re.match("^[0-9]+",str(m)) and not re.match("[0-9]+",str(m)):
-            if not( pattern.match(str(m)) ):
-                content += str(m)+" "
+content = ''
+
+try:
+    with open(allVariables.pathToHtml + url + ".txt", 'rb') as file:
+        for line in file:
+            word = str(line).split(" ")
+            for m in word:
+                #if not re.match("^[0-9]+",str(m)) and not re.match("[0-9]+",str(m)):
+                if not( pattern.match(str(m)) ):
+                    content += str(m)+" "
+except FileNotFoundError:
+    print("le fichier voulu n'existe pas")
+    exit(-1)
+
 
 documents = [content]
 
@@ -98,11 +110,10 @@ print()
 conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
 cursor = conn.cursor()
 
-onion = "%" + url + "%"
 now = datetime.now()
 
 try:
-    cursor.execute("""UPDATE site SET date = %s,  cat = %s, enCours = %s  WHERE url like %s """, (now, k, 2, onion, )) 
+    cursor.execute("""UPDATE site SET date = %s,  cat = %s, enCours = %s  WHERE id = %s """, (now, k, 2, i_d, )) 
     conn.commit()
 except mysql.connector.Error as e:
     print("msg update: " + e.msg)
@@ -111,7 +122,7 @@ nb = 1
 
 for i in motBDD:
     try:
-        cursor.execute("""UPDATE site SET mc%s = %s WHERE url like %s """, (nb, i[0], onion, )) 
+        cursor.execute("""UPDATE site SET mc%s = %s WHERE id = %s """, (nb, i[0], i_d, )) 
         conn.commit()
         nb += 1
     except mysql.connector.Error as e:

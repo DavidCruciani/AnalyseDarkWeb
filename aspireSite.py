@@ -29,7 +29,7 @@ def aspire(url):
 
     return error
 
-def saveErrorSite(url):
+def saveErrorSite(i_d, url):
     #*******************************a changer**************************
     conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
     cursor = conn.cursor()
@@ -37,9 +37,7 @@ def saveErrorSite(url):
     now = datetime.now()
 
     try:
-        onion = "%" + url + "%"
-
-        cursor.execute("""UPDATE site SET date = %s, erreur = %s, enCours = %s WHERE url like %s """, (now, 1, 2, onion,)) 
+        cursor.execute("""UPDATE site SET date = %s, erreur = %s, enCours = %s WHERE id = %s """, (now, 1, 2, i_d,)) 
         conn.commit()
     except mysql.connector.Error as e:
         print("msg update: " + e.msg)
@@ -56,8 +54,12 @@ lines = f.readlines()
 f.close()
 
 for line in lines:
-    url = line
-    url = url.rstrip('\n')
+    r = line.rstrip('\n')
+
+    l = r.split(",")
+
+    i_d = l[0]
+    url = l[1]
 
     if url.endswith("/"):
         url = url[:-1]
@@ -67,12 +69,12 @@ for line in lines:
 
     if(aspireError == "ok"):
         print("ok")
-        #recuperer fichier JSON sur Alyze
-        system("python3 " + allVariables.pathToProg + "htmlextract.py " + url)
-        system("python3 " + allVariables.pathToProg + "Count.py " + url)
+        #Effectuer l'analyse du site
+        system("python3 " + allVariables.pathToProg + "htmlextract.py " + i_d + " " + url)
+        system("python3 " + allVariables.pathToProg + "Count.py " + i_d + " " + url)
     else:
         print("Erreur wget pour aspirer le site : ", url)
-        saveErrorSite(url)
+        saveErrorSite(i_d, url)
 
 
 system("rm -r " + allVariables.pathToHtml)

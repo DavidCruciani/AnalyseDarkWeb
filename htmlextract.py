@@ -36,13 +36,19 @@ class MyHTMLParser(HTMLParser):
         for attr in attrs:
             if startTag == "a":
                 if attr[0] == "href":
-                    if "onion" in attr[1]:
-                        if attr[1].startswith("https"):
-                            self.lsLinks.append(attr[1][8:])
-                        elif attr[1].startswith("http"):
-                            self.lsLinks.append(attr[1][7:])
+                    if ".onion" in attr[1]:
+                        loc = attr[1]
+                        if loc.startswith("\\'") and loc.endswith("\\'"):
+                            loc = loc[2:]
+                            loc = loc[:-2]
+                        if loc.endswith("\\"):
+                            loc = loc[:-1]
+                        if loc.startswith("https"):
+                            self.lsLinks.append(loc[8:])
+                        elif loc.startswith("http"):
+                            self.lsLinks.append(loc[7:])
                         else:
-                            self.lsLinks.append(attr[1])
+                            self.lsLinks.append(loc)
 
     def handle_endtag(self, endTag):
         self.lsEndTags.append(endTag)
@@ -55,7 +61,7 @@ class MyHTMLParser(HTMLParser):
 
     def handle_data(self, data):
         if self.match:
-            self.title = data
+            self.title = data.strip('\n')
             self.match = False
 
         data = data.lower()
@@ -66,7 +72,12 @@ class MyHTMLParser(HTMLParser):
 
 if __name__ == "__main__":
 
-    url = sys.argv[1]  
+    if len(sys.argv) != 3:
+        print("il manque l'identifiant ainsi que l'url a extraire")
+        exit(-1)
+
+    i_d = sys.argv[1] 
+    url = sys.argv[2]
 
     if not exists(allVariables.pathToHtml):
         mkdir(allVariables.pathToHtml)
@@ -75,64 +86,75 @@ if __name__ == "__main__":
     parser = MyHTMLParser()
 
 
-    with open(allVariables.pathToPage + url + '.html', encoding="utf-8") as html_p:
+    try:
+        with open(allVariables.pathToPage + url + '.html', encoding="utf-8") as html_p:
 
-        """encoding = "utf-8"
-        html_page = html_page.read().decode(encoding)
-        html_page = unicodedata.normalize('NFD', html_page).encode('ascii', 'ignore')"""
+            """encoding = "utf-8"
+            html_page = html_page.read().decode(encoding)
+            html_page = unicodedata.normalize('NFD', html_page).encode('ascii', 'ignore')"""
 
-        html_page = html_p.read()
-        #suppression des accents
-        html_page = unicodedata.normalize('NFD', html_page).encode('ascii', 'ignore')
+            html_page = html_p.read()
+            #suppression des accents
+            html_page = unicodedata.normalize('NFD', html_page).encode('ascii', 'ignore')
 
-        regex = re.compile('<style>(.*)</style>')
-        reg = re.compile('<style .*>(.*)</style>')
+            regex = re.compile('<style>(.*)</style>')
+            reg = re.compile('<style .*>(.*)</style>')
 
-        html_page = regex.sub(" ", str(html_page))
-        html_page = reg.sub(" ", str(html_page))
+            html_page = regex.sub(" ", str(html_page))
+            html_page = reg.sub(" ", str(html_page))
 
-        #Feeding the content
-        parser.feed(str(html_page))
+            #Feeding the content
+            parser.feed(str(html_page))
 
-        fichier = open(allVariables.pathToHtml + url +'.txt', 'w', encoding="utf-8")
-        fichier.write(parser.lsData)
-        fichier.close()
+            fichier = open(allVariables.pathToHtml + url +'.txt', 'w', encoding="utf-8")
+            fichier.write(parser.lsData)
+            fichier.close()
 
-        #printing the extracted values
+            #printing the extracted values
 
-        print("Links find", parser.lsLinks)
-        
+            print("Links find", parser.lsLinks)
+            
+            conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
+            cursor = conn.cursor(buffered=True)
+
+            try:
+                cursor.execute("""UPDATE site SET titre = %s WHERE id = %s """, (parser.title, i_d,)) 
+                conn.commit()
+            except mysql.connector.Error as e:
+                print("msg update titre: " + e.msg)
+
+            for i in range(0,len(parser.lsLinks)):
+                try:
+                    row = "%"+str(parser.lsLinks[i])+"%"
+                    cursor.execute("""SELECT id FROM site WHERE url like %s """, (row,)) 
+                    rows = cursor.fetchone()
+
+                    if rows == (None,) or rows == None:
+                        try:
+                            cursor.execute("""INSERT INTO site(url) VALUES(%s)""", (str(parser.lsLinks[i]), ) )
+                            conn.commit()
+                        except mysql.connector.Error as e:
+                            print("msg insert: " + e.msg)
+
+                except mysql.connector.Error as e:
+                    print("msg select: " + e.msg)
+            conn.close()
+                
+
+            #print("Start tags", parser.lsStartTags)
+            #print("End tags", parser.lsEndTags)
+            #print("Start End tags", parser.lsStartEndTags)
+            #print("Comments", parser.lsComments)
+            #print("Data: ", parser.lsData)
+            #print("Pi", parser.lsPi)
+    except UnicodeDecodeError:
         conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
         cursor = conn.cursor()
 
         try:
-            onion = "%" + url + "%"
-            cursor.execute("""UPDATE site SET titre = %s WHERE url like %s """, (parser.title, onion,)) 
+            cursor.execute("""UPDATE site SET titre = %s, erreur = %s WHERE id = %s """, ("encode", 1, i_d,)) 
             conn.commit()
         except mysql.connector.Error as e:
             print("msg update: " + e.msg)
 
-        for i in range(0,len(parser.lsLinks)):
-            try:
-                row = "%"+str(parser.lsLinks[i])+"%"
-                cursor.execute("""SELECT id FROM site WHERE url like %s """, (row,)) 
-                rows = cursor.fetchone()
-
-                if rows == (None,) or rows == None:
-                    try:
-                        cursor.execute("""INSERT INTO site(url) VALUES(%s)""", (str(parser.lsLinks[i]), ) )
-                        conn.commit()
-                    except mysql.connector.Error as e:
-                        print("msg update: " + e.msg)
-
-            except mysql.connector.Error as e:
-                print("msg update: " + e.msg)
         conn.close()
-            
-
-        #print("Start tags", parser.lsStartTags)
-        #print("End tags", parser.lsEndTags)
-        #print("Start End tags", parser.lsStartEndTags)
-        #print("Comments", parser.lsComments)
-        #print("Data: ", parser.lsData)
-        #print("Pi", parser.lsPi)
