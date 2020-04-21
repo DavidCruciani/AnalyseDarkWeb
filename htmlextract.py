@@ -6,6 +6,7 @@ from os import mkdir
 from os.path import exists
 import mysql.connector 
 import allVariables
+from datetime import datetime
 
 #sudo torify wget http://6vx54aliqrmlj7supc4spigwg5pie7jxge2q57rv7i25tzdobuyggkyd.onion -O /home/mim/Bureau/Dark/page/6vx54aliqrmlj7supc4spigwg5pie7jxge2q57rv7i25tzdobuyggkyd.html -t 1 -T 10
 
@@ -41,7 +42,7 @@ class MyHTMLParser(HTMLParser):
                         if loc.startswith("\\'") and loc.endswith("\\'"):
                             loc = loc[2:]
                             loc = loc[:-2]
-                        if loc.endswith("\\"):
+                        if loc.endswith("/"):
                             loc = loc[:-1]
                         if loc.startswith("https"):
                             self.lsLinks.append(loc[8:])
@@ -152,7 +153,8 @@ if __name__ == "__main__":
         cursor = conn.cursor()
 
         try:
-            cursor.execute("""UPDATE site SET titre = %s, erreur = %s WHERE id = %s """, ("encode", 1, i_d,)) 
+            now = datetime.now()
+            cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "encode" 2, i_d,)) 
             conn.commit()
         except mysql.connector.Error as e:
             print("msg update: " + e.msg)

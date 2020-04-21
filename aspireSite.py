@@ -37,7 +37,7 @@ def saveErrorSite(i_d, url):
     now = datetime.now()
 
     try:
-        cursor.execute("""UPDATE site SET date = %s, erreur = %s, enCours = %s WHERE id = %s """, (now, 1, 2, i_d,)) 
+        cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "site inaccessible" 2, i_d,)) 
         conn.commit()
     except mysql.connector.Error as e:
         print("msg update: " + e.msg)
