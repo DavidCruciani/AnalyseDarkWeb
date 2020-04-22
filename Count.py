@@ -64,22 +64,29 @@ documents = [content]
 documents[0] = documents[0][2:]
 documents[0] = documents[0][:-1]
 
-if len(documents[0]) == 0:
-    conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
-    cursor = conn.cursor()
+cv = CountVectorizer(stop_words="english")
 
-    now = datetime.now()
-
+count_vector = None
+try:
+    count_vector=cv.fit_transform(documents)
+except ValueError:
     try:
+        conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
+        cursor = conn.cursor()
+
+        now = datetime.now()
+
         cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s  WHERE id = %s """, (now, 1, "le site semble vide", 2, i_d, )) 
         conn.commit()
+
+        print("Le site semble vide")
+        conn.close()
+
     except mysql.connector.Error as e:
         print("msg update: " + e.msg)
+
     exit(-1)
 
-
-cv = CountVectorizer(stop_words="english")
-count_vector=cv.fit_transform(documents)
 
 #sort the counts of first book title by descending order of counts
 sorted_items=sort_coo(count_vector[0].tocoo())

@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
         try:
             now = datetime.now()
-            cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "encode" 2, i_d,)) 
+            cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "encode", 2, i_d,)) 
             conn.commit()
         except mysql.connector.Error as e:
             print("msg update: " + e.msg)

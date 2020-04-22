@@ -24,7 +24,6 @@ def aspire(url):
     if (p_status == 8 or p_status == 0):
         error = "ok"
     else:
-        print("Erreur dans l'url")
         error = "nok"
 
     return error
@@ -37,12 +36,12 @@ def saveErrorSite(i_d, url):
     now = datetime.now()
 
     try:
-        cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "site inaccessible" 2, i_d,)) 
+        cursor.execute("""UPDATE site SET date = %s, erreur = %s, titreErreur = %s, enCours = %s WHERE id = %s """, (now, 1, "site inaccessible", 2, i_d,)) 
         conn.commit()
     except mysql.connector.Error as e:
         print("msg update: " + e.msg)
 
-    print(url.rstrip('\n'), " Erreur envoyée dans la base")
+    print(url.rstrip('\n'), " Site inaccessible")
     conn.close()
 #***************************************************
 
@@ -79,3 +78,15 @@ for line in lines:
 
 system("rm -r " + allVariables.pathToHtml)
 system("rm -r " + allVariables.pathToPage)
+
+
+conn = mysql.connector.connect(host = allVariables.hostDB, user = allVariables.userDB, password = allVariables.passwordDB, database = allVariables.database)
+cursor = conn.cursor()
+
+try:
+    cursor.execute("""UPDATE site SET enCours = %s WHERE enCours = %s """, ( 0, 1,)) 
+    conn.commit()
+except mysql.connector.Error as e:
+    print("msg update: " + e.msg)
+
+conn.close()
